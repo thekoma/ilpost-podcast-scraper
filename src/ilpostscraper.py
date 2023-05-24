@@ -199,7 +199,7 @@ def is_selenium_working():
 def is_redis_available():
     """Check if redis is ready!"""
     try:
-        r.memory_stats()
+        redis_cache.memory_stats()
     except (
         redis.exceptions.ConnectionError,
         redis.exceptions.BusyLoadingError,

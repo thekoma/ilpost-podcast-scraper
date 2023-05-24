@@ -1,0 +1,15 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  creationTimestamp: null
+  name: morning-default
+spec:
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              group: morning
+  podSelector:
+    matchLabels:
+      group: morning
+

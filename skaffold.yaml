@@ -1,0 +1,30 @@
+apiVersion: skaffold/v4beta5
+kind: Config
+metadata:
+  name: morning
+manifests:
+  rawYaml:
+    - k8s/secret.yaml
+    - k8s/morning-default-networkpolicy.yaml
+    - k8s/morning-deployment.yaml
+    - k8s/morning-service.yaml
+    - k8s/redis-data-persistentvolumeclaim.yaml
+    - k8s/redis-deployment.yaml
+    - k8s/redis-service.yaml
+    - k8s/selenium-deployment.yaml
+    - k8s/selenium-service.yaml
+build:
+  artifacts:
+  - image: morning
+    sync:
+      infer:
+      - 'src/*'
+
+  local: {}
+portForward:
+- resourceType: deployment
+  resourceName: morning
+  port: 5000
+- resourceType: deployment
+  resourceName: selenium
+  port: 4444

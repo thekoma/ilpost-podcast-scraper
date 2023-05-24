@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: morning
+    group: morning
+  name: morning
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: morning
+      group: morning
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: morning
+        group: morning
+    spec:
+      containers:
+        - envFrom:
+          - secretRef:
+              name: env
+          image: morning
+          command: ["uvicorn", "morning:app", "--reload" ,"--proxy-headers", "--port", "5000", "--host", "0.0.0.0"]
+          livenessProbe:
+            exec:
+              command:
+                - curl
+                - -f
+                - http://127.0.0.1:5000/ping
+            failureThreshold: 12
+            periodSeconds: 5
+            timeoutSeconds: 5
+          name: morning
+          ports:
+            - containerPort: 5000
+      restartPolicy: Always

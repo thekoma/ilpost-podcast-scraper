@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: redis
+    group: morning
+  name: redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+      group: morning
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: redis
+        group: morning
+    spec:
+      containers:
+        - envFrom:
+          - secretRef:
+              name: env
+          image: redis:alpine
+          livenessProbe:
+            exec:
+              command:
+                - redis-cli
+                - ping
+            failureThreshold: 12
+            periodSeconds: 5
+            timeoutSeconds: 5
+          name: redis
+          ports:
+            - containerPort: 6379
+          resources: {}
+          volumeMounts:
+            - mountPath: /var/lib/redis
+              name: redis-data
+      restartPolicy: Always
+      volumes:
+        - name: redis-data
+          persistentVolumeClaim:
+            claimName: redis-data
+status: {}

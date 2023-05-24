@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: selenium
+    group: morning
+  name: selenium
+spec:
+  ports:
+    - name: "4444"
+      port: 4444
+      targetPort: 4444
+  selector:
+    app: selenium
+    group: morning

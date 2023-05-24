@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f docker-compose.yml
+    kompose.version: 1.28.0 (HEAD)
+  creationTimestamp: null
+  labels:
+    app: selenium
+    group: morning
+  name: selenium
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: selenium
+      group: morning
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        group: morning
+        app: selenium
+    spec:
+      containers:
+        - envFrom:
+          - secretRef:
+              name: env
+          env:
+            - name: JAVA_OPTS
+              value: -Dwebdriver.chrome.whitelistedIps=
+            - name: SE_NODE_MAX_SESSIONS
+              value: '3'
+            - name: SE_NODE_OVERRIDE_MAX_SESSIONS
+              value: 'true'
+          image: selenium/standalone-chrome
+          livenessProbe:
+            exec:
+              command:
+                - curl
+                - -f
+                - http://localhost:4444/wd/hub/status
+            failureThreshold: 12
+            periodSeconds: 5
+            timeoutSeconds: 5
+          name: selenium
+          ports:
+            - containerPort: 4444
+      restartPolicy: Always

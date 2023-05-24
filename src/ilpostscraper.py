@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""This stupid webapp catches the latest morning post from ilpost.it ."""
+"""This stupid webapp catches the latest podcast from ilpost.it ."""
 import orjson, json
 import os
 import pickle
@@ -43,7 +43,6 @@ CHECK_SITE = os.getenv("CHECK_SITE", "https://www.google.com")
 # Used Variables
 SELENIUM_HUB = SELENIUM_URL + "/wd/hub"
 LOGIN_PAGE = "https://www.ilpost.it/wp-login.php?redirect_to=https://www.ilpost.it"
-MORNING_PAGE = "https://www.ilpost.it/podcasts/morning/"
 USERNAME_XPATH = "//input[@id='user_login']"
 PASSWORD_XPATH = "//input[@id='user_pass']"
 CHECKBOX_XPATH = "//input[@id='rememberme']"
@@ -386,14 +385,12 @@ def get_podcasts_list(fresh=False):
         podcasts = pickle.loads(r.get("podcasts"))
     else:
         """Scrape podcast list"""
-        logging.debug("👾 Starting scraping podcasts titles")
+        logging.info("👾 Starting scraping podcasts titles")
         cookies = get_cookies()
         driver = webdriver.Remote(command_executor=SELENIUM_HUB, options=opts)
         logging.debug("👾 Working with the driver!")
         with driver:
-            logging.info("Navigate to Morning Post Page")
-
-            logging.debug("👾 get podcasts page")
+            logging.debug("👾 Get podcasts page to scrape all the podcasts")
             driver.get("https://www.ilpost.it/podcasts/")
             find_url="https://www.ilpost.it/episodes/podcasts/"
             logging.debug("👾 find podcasts cards")

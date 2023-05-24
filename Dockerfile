@@ -17,8 +17,7 @@ RUN pip3 install --no-cache-dir --upgrade pip && \
     poetry config virtualenvs.create false && \
     poetry install --only main --no-interaction --no-ansi
 COPY src/* .
-ENV FLASK_APP=morning
 ENV PYTHONUNBUFFERED=TRUE
 ENV TZ='Europe/Rome'
 EXPOSE 5000
-CMD ["uvicorn", "morning:app", "--proxy-headers", "--port", "5000", "--host", "0.0.0.0"]
+CMD ["uvicorn", "ilpostscraper:app", "--proxy-headers", "--port", "5000", "--host", "0.0.0.0"]

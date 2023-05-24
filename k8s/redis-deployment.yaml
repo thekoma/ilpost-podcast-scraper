@@ -3,21 +3,21 @@ kind: Deployment
 metadata:
   labels:
     app: redis
-    group: morning
+    group: ilpostscraper
   name: redis
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: redis
-      group: morning
+      group: ilpostscraper
   strategy:
     type: Recreate
   template:
     metadata:
       labels:
         app: redis
-        group: morning
+        group: ilpostscraper
     spec:
       containers:
         - envFrom:

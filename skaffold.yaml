@@ -1,13 +1,13 @@
 apiVersion: skaffold/v4beta5
 kind: Config
 metadata:
-  name: morning
+  name: ilpost-scraper
 manifests:
   rawYaml:
     - k8s/secret.yaml
-    - k8s/morning-default-networkpolicy.yaml
-    - k8s/morning-deployment.yaml
-    - k8s/morning-service.yaml
+    - k8s/ilpost-scraper-default-networkpolicy.yaml
+    - k8s/ilpost-scraper-deployment.yaml
+    - k8s/ilpost-scraper-service.yaml
     - k8s/redis-data-persistentvolumeclaim.yaml
     - k8s/redis-deployment.yaml
     - k8s/redis-service.yaml
@@ -15,7 +15,7 @@ manifests:
     - k8s/selenium-service.yaml
 build:
   artifacts:
-  - image: morning
+  - image: ilpostscraper
     sync:
       infer:
       - 'src/*'
@@ -23,7 +23,7 @@ build:
   local: {}
 portForward:
 - resourceType: deployment
-  resourceName: morning
+  resourceName: ilpostscraper
   port: 5000
 - resourceType: deployment
   resourceName: selenium

@@ -3,7 +3,7 @@ kind: Service
 metadata:
   labels:
     app: redis
-    group: morning
+    group: ilpostscraper
   name: redis
 spec:
   ports:
@@ -12,6 +12,6 @@ spec:
       targetPort: 6379
   selector:
     app: redis
-    group: morning
+    group: ilpostscraper
 status:
   loadBalancer: {}

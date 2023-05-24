@@ -2,28 +2,28 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app: morning
-    group: morning
-  name: morning
+    app: scraper
+    group: ilpostscraper
+  name: ilpostscraper
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: morning
-      group: morning
+      app: scraper
+      group: ilpostscraper
   strategy: {}
   template:
     metadata:
       labels:
-        app: morning
-        group: morning
+        app: scraper
+        group: ilpostscraper
     spec:
       containers:
         - envFrom:
           - secretRef:
               name: env
-          image: morning
-          command: ["uvicorn", "morning:app", "--reload" ,"--proxy-headers", "--port", "5000", "--host", "0.0.0.0"]
+          image: ilpostscraper
+          command: ["uvicorn", "ilpostscraper:app", "--reload" ,"--proxy-headers", "--port", "5000", "--host", "0.0.0.0"]
           livenessProbe:
             exec:
               command:
@@ -33,7 +33,7 @@ spec:
             failureThreshold: 12
             periodSeconds: 5
             timeoutSeconds: 5
-          name: morning
+          name: ilpostscraper
           ports:
             - containerPort: 5000
       restartPolicy: Always

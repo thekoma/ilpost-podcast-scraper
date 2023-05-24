@@ -1,4 +1,4 @@
-[![CI](https://github.com/thekoma/morning/actions/workflows/main.yml/badge.svg)](https://github.com/thekoma/morning/actions/workflows/main.yml)
+[![CI](https://github.com/thekoma/ilpost-podcast-scraper/actions/workflows/main.yml/badge.svg)](https://github.com/thekoma/ilpost-podcast-scraper/actions/workflows/main.yml)
 
 TODO:
 - Check variables at boot
@@ -7,12 +7,10 @@ TODO:
 
 Endpoint parameters:
 - /ping -> Expect a pong 200
-- /cookies -> print redis cookies (or create new cookies if expired) 
-- /morning -> gives you the podcast (cached)
-  - force: Set to any value to trigger cookie refresh and podcast scrape
-  - newcookies: Set to any value to trigger cookie refresh
+- /cookies -> print redis cookies (or create new cookies if expired)
+- /podcast/podcast-name -> gives you the podcast (cached)
   - fresh: Set to any value to trigger scrape
 
 ```bash
-curl http://morning:5000/morning?force=True
+curl http://localhost:5000/podcasts
 ```

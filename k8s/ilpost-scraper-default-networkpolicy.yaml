@@ -2,14 +2,14 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   creationTimestamp: null
-  name: morning-default
+  name: scraper-default
 spec:
   ingress:
     - from:
         - podSelector:
             matchLabels:
-              group: morning
+              group: ilpostscraper
   podSelector:
     matchLabels:
-      group: morning
+      group: ilpostscraper
 

@@ -7,19 +7,19 @@ metadata:
   creationTimestamp: null
   labels:
     app: selenium
-    group: morning
+    group: ilpostscraper
   name: selenium
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: selenium
-      group: morning
+      group: ilpostscraper
   strategy: {}
   template:
     metadata:
       labels:
-        group: morning
+        group: ilpostscraper
         app: selenium
     spec:
       containers:

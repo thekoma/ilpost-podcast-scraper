@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "morning"
+name = "ilpostscraper"
 version = "0.1.0"
 description = "A scraper for ilpost.it"
 authors = ["Andrea Cervesato <andrea.cervesato@gmail.com>"]

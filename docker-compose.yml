@@ -1,6 +1,6 @@
 ---
 services:
-  morning:
+  ilpostscraper:
     image: ${TEST_IMAGE}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://127.0.0.1:5000/ping"]

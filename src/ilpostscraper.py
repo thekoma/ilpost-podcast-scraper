@@ -81,9 +81,11 @@ SCRAPE_RETRIES = int(
     os.getenv("SCRAPE_RETRIES", "10")
 )  # how many time do I have to try and retrive the episode? This value should be 1 but the site sucks.
 EXPECTED_COOKIES = 3  # ilpost.it uses wordpress that produces a finite number of cookies in this case should be always be 3 or more.
+
+
+#### Setup Option for the driver
 # Initialize the Chrome Browser Options.
 opts = Options()
-
 # Let's set a credible UserAgent
 opts.add_argument("user-agent=" + USERAGENT)
 # We prefer to use /tmp as SHM is a finite resource.
@@ -132,9 +134,6 @@ def get_cookies_redis():
 
 def create_cookies():
     """Create new cookies on wordpress!"""
-    logging.debug("Start create_cookies")
-    logging.debug("Open Driver!")
-
     driver = webdriver.Remote(command_executor=SELENIUM_HUB, options=opts)
     logging.info("Creating New Cookies!")
     with driver:
@@ -154,12 +153,13 @@ def create_cookies():
             logging.debug(missing.message)
         except TimeoutException as timeout:
             logging.debug(timeout.message)
-
         cookies = driver.get_cookies()
-        while len(cookies) < EXPECTED_COOKIES:
+        while (
+            len(cookies) < EXPECTED_COOKIES
+        ):  # I need to cicle while the cookies are created. We expect a minimum number of cookies for wordpress
             logging.debug(driver.get_cookies())
             cookies = driver.get_cookies()
-            logging.debug("Numero di cookies: " + str(len(driver.get_cookies())))
+            logging.debug(f"Number of cookies saved: {len(driver.get_cookies())}")
         redis_cache.set("cookies", pickle.dumps(cookies))
         logging.debug("End create_cookies")
         return cookies
@@ -171,7 +171,7 @@ def is_selenium_available():
     try:
         response = requests.get(SELENIUM_HUB + "/status")
         status = response.status_code
-    except requests.exceptions.RequestException as e:  # This is the correct syntax
+    except requests.exceptions.RequestException as e:
         status = 500
     logging.debug(status)
     if status != 200:
@@ -185,10 +185,6 @@ def is_selenium_available():
 
 def is_selenium_working():
     driver = webdriver.Remote(command_executor=SELENIUM_HUB, options=opts)
-
-    # driver = webdriver.Remote(
-    #     command_executor=SELENIUM_HUB, options=webdriver.ChromeOptions()
-    # )
     with driver:
         logging.debug("Navigate to " + CHECK_SITE)
         try:
@@ -222,7 +218,7 @@ def get_cookies():
     return cookies
 
 
-# This function is used to send
+# This function is used to send data to a remote driver as it's not supported as a direct command in this configuration
 def send(driver, cmd, params={}):
     resource = "/session/%s/chromium/send_command_and_get_result" % driver.session_id
     url = driver.command_executor._url + resource

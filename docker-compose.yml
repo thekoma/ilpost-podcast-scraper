@@ -1,7 +1,7 @@
 ---
 services:
   ilpostscraper:
-    image: ${TEST_IMAGE}
+    image: ghcr.io/thekoma/ilpost-podcast-scraper:latest
     healthcheck:
       test: ["CMD", "curl", "-f", "http://127.0.0.1:5000/ping"]
       interval: 5s

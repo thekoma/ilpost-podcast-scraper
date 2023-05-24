@@ -391,7 +391,7 @@ def get_podcast_info(podcast_short_name):
             found = True
             break
     if not found:
-        podcasts = get_podcasts_list(fresh=true)
+        podcasts = get_podcasts_list(fresh=True)
         for podcast in podcasts:
             if podcast["short_name"] == podcast_short_name:
                 response = podcast

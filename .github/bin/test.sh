@@ -1,4 +1,5 @@
 #!/bin/bash
+set -ex
 try=0
 retry=12
 exit_var=1
@@ -7,7 +8,7 @@ sleep=5
 echo 🐳 Setting up docker composer
 
 cp .env.dist .env
-apt install -y yq
+sudo apt install -y yq
 yq -i ".services.ilpostscraper.image = $TEST_IMAGE" docker-compose.yml
 docker-compose -f docker-compose.yml up -d
 

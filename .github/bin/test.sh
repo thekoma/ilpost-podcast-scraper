@@ -9,7 +9,6 @@ echo 🐳 Setting up docker composer
 
 cp .env.dist .env
 sudo snap install yq
-rehash
 yq -i ".services.ilpostscraper.image = $TEST_IMAGE" docker-compose.yml
 docker-compose -f docker-compose.yml up -d
 

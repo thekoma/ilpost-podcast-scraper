@@ -81,6 +81,9 @@ SCRAPE_RETRIES = int(
     os.getenv("SCRAPE_RETRIES", "10")
 )  # how many time do I have to try and retrive the episode? This value should be 1 but the site sucks.
 EXPECTED_COOKIES = 3  # ilpost.it uses wordpress that produces a finite number of cookies in this case should be always be 3 or more.
+SECONDSBEFORECLOSINGDRIVER = int(
+    os.getenv("SECONDSBEFORECLOSINGDRIVER", "0")
+)  # This is useful to debug normally should be 0.
 
 
 #### Setup Option for the driver
@@ -421,11 +424,16 @@ def get_podcasts_list(fresh=False):
         driver = webdriver.Remote(command_executor=SELENIUM_HUB, options=opts)
         with driver:
             logging.debug("Get podcasts page to scrape all the podcasts")
-            find_url = "https://www.ilpost.it/episodes/podcasts/"
+            find_url = "https://www.ilpost.it/podcasts/"
             logging.debug("find podcasts cards")
-
+            driver.get(find_url)
             cards = driver.find_elements(By.CLASS_NAME, "card")
-            logging.debug("cycle thru {len(cards)} cards")
+            logging.debug(f"cycle thru {len(cards)} cards")
+            if SECONDSBEFORECLOSINGDRIVER > 0:
+                logging.debug(
+                    f"Sleeping  {SECONDSBEFORECLOSINGDRIVER} before continuing"
+                )
+            time.sleep(SECONDSBEFORECLOSINGDRIVER)
             podcasts = []
             for card in cards:
                 description = card.find_element(By.TAG_NAME, "p")

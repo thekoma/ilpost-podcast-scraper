@@ -11,7 +11,7 @@ cp .env.dist .env
 sudo snap install yq
 yq -i '.services.ilpostscraper.image=env(TEST_IMAGE)' docker-compose.yml
 docker-compose -f docker-compose.yml up -d
-
+set +e
 echo "🚦 Starting checks."
 while [ $try -lt $retry ]; do
 	((try++))

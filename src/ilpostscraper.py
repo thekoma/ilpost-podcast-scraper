@@ -459,8 +459,7 @@ def get_podcasts_list(fresh=False):
                 description_txt = description.text
                 match = re.search(r"/episodes/podcasts/(.+)/", href)
                 short_name = match.group(1)
-                logo = img.get_attribute("src")
-
+                logo = img.get_attribute("src").split("?")[0]
                 logging.debug(description_txt)
                 logging.debug(href)
                 logging.debug(name)

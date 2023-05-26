@@ -1,0 +1,161 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "ilpostpodcastscraper.fullname" . }}-ilpostscraper
+  labels:
+    app: scraper
+    group: ilpostscraper
+  {{- include "ilpostpodcastscraper.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.ilpostscraper.replicas }}
+  selector:
+    matchLabels:
+      app: scraper
+      group: ilpostscraper
+    {{- include "ilpostpodcastscraper.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app: scraper
+        group: ilpostscraper
+      {{- include "ilpostpodcastscraper.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+      - command:
+        - uvicorn
+        - ilpostscraper:app
+        - --reload
+        - --proxy-headers
+        - --port
+        - "5000"
+        - --host
+        - 0.0.0.0
+        env:
+        - name: KUBERNETES_CLUSTER_DOMAIN
+          value: {{ quote .Values.kubernetesClusterDomain }}
+        envFrom:
+        - secretRef:
+            name: {{ include "ilpostpodcastscraper.fullname" . }}-env
+        image: {{ .Values.ilpostscraper.ilpostscraper.image.repository }}:{{ .Values.ilpostscraper.ilpostscraper.image.tag
+          | default .Chart.AppVersion }}
+        livenessProbe:
+          exec:
+            command:
+            - curl
+            - -f
+            - http://127.0.0.1:5000/ping
+          failureThreshold: 12
+          periodSeconds: 5
+          timeoutSeconds: 5
+        name: ilpostscraper
+        ports:
+        - containerPort: 5000
+        resources: {}
+      restartPolicy: Always
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "ilpostpodcastscraper.fullname" . }}-redis
+  labels:
+    app: redis
+    group: ilpostscraper
+  {{- include "ilpostpodcastscraper.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.redis.replicas }}
+  selector:
+    matchLabels:
+      app: redis
+      group: ilpostscraper
+    {{- include "ilpostpodcastscraper.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app: redis
+        group: ilpostscraper
+      {{- include "ilpostpodcastscraper.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+      - env:
+        - name: KUBERNETES_CLUSTER_DOMAIN
+          value: {{ quote .Values.kubernetesClusterDomain }}
+        envFrom:
+        - secretRef:
+            name: {{ include "ilpostpodcastscraper.fullname" . }}-env
+        image: {{ .Values.redis.redis.image.repository }}:{{ .Values.redis.redis.image.tag
+          | default .Chart.AppVersion }}
+        livenessProbe:
+          exec:
+            command:
+            - redis-cli
+            - ping
+          failureThreshold: 12
+          periodSeconds: 5
+          timeoutSeconds: 5
+        name: redis
+        ports:
+        - containerPort: 6379
+        resources: {}
+        volumeMounts:
+        - mountPath: /var/lib/redis
+          name: redis-data
+      restartPolicy: Always
+      volumes:
+      - name: redis-data
+        persistentVolumeClaim:
+          claimName: {{ include "ilpostpodcastscraper.fullname" . }}-redis-data
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "ilpostpodcastscraper.fullname" . }}-selenium
+  labels:
+    app: selenium
+    group: ilpostscraper
+  {{- include "ilpostpodcastscraper.labels" . | nindent 4 }}
+  annotations:
+    kompose.cmd: kompose convert -f docker-compose.yml
+    kompose.version: 1.28.0 (HEAD)
+spec:
+  replicas: {{ .Values.selenium.replicas }}
+  selector:
+    matchLabels:
+      app: selenium
+      group: ilpostscraper
+    {{- include "ilpostpodcastscraper.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app: selenium
+        group: ilpostscraper
+      {{- include "ilpostpodcastscraper.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+      - env:
+        - name: JAVA_OPTS
+          value: {{ quote .Values.selenium.selenium.env.javaOpts }}
+        - name: SE_NODE_MAX_SESSIONS
+          value: {{ quote .Values.selenium.selenium.env.seNodeMaxSessions }}
+        - name: SE_NODE_OVERRIDE_MAX_SESSIONS
+          value: {{ quote .Values.selenium.selenium.env.seNodeOverrideMaxSessions }}
+        - name: KUBERNETES_CLUSTER_DOMAIN
+          value: {{ quote .Values.kubernetesClusterDomain }}
+        envFrom:
+        - secretRef:
+            name: {{ include "ilpostpodcastscraper.fullname" . }}-env
+        image: {{ .Values.selenium.selenium.image.repository }}:{{ .Values.selenium.selenium.image.tag
+          | default .Chart.AppVersion }}
+        livenessProbe:
+          exec:
+            command:
+            - curl
+            - -f
+            - http://localhost:4444/wd/hub/status
+          failureThreshold: 12
+          periodSeconds: 5
+          timeoutSeconds: 5
+        name: selenium
+        ports:
+        - containerPort: 4444
+        resources: {}
+      restartPolicy: Always

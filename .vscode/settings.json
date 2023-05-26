@@ -2,5 +2,8 @@
   "cSpell.language": "en,lorem,en-GB",
   "cSpell.words": [
     "USERAGENT"
-  ]
+  ],
+  "yaml.schemas": {
+    "https://json.schemastore.org/helmfile.json": "file:///Users/thekoma/src/morning/ilpostpodcastscraper/templates/env.yaml"
+  }
 }

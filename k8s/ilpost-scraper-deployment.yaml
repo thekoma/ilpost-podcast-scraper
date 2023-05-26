@@ -22,7 +22,7 @@ spec:
         - envFrom:
           - secretRef:
               name: env
-          image: ilpostscraper
+          image: ilpostscraper:latest
           command: ["uvicorn", "ilpostscraper:app", "--reload" ,"--proxy-headers", "--port", "5000", "--host", "0.0.0.0"]
           livenessProbe:
             exec:

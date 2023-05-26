@@ -1,0 +1,56 @@
+env:
+  debug: "false"
+  loginPassword: "username"
+  loginUser: "password"
+  loglevel: "INFO"
+  redisHost: ""
+  redisPort: "6379"
+  redisReplicationMode: ""
+  seNodeMaxSessions: ""
+  secondsbeforeclosingdriver: ""
+  seleniumUrl: ""
+  userGid: "1000"
+  userUid: "1000"
+  vncNoPassword: "true"
+ilpostscraper:
+  ilpostscraper:
+    image:
+      repository: ilpostscraper
+      tag: latest
+  replicas: 1
+kubernetesClusterDomain: cluster.local
+pvc:
+  redisData:
+    storageRequest: 100Mi
+redis:
+  ports:
+  - name: "6379"
+    port: 6379
+    targetPort: 6379
+  redis:
+    image:
+      repository: redis
+      tag: alpine
+  replicas: 1
+  type: ClusterIP
+scraper:
+  ports:
+  - name: web
+    port: 5000
+    targetPort: 5000
+  type: ClusterIP
+selenium:
+  ports:
+  - name: "4444"
+    port: 4444
+    targetPort: 4444
+  replicas: 1
+  selenium:
+    env:
+      javaOpts: -Dwebdriver.chrome.whitelistedIps=
+      seNodeMaxSessions: "3"
+      seNodeOverrideMaxSessions: "true"
+    image:
+      repository: selenium/standalone-chrome
+      tag: latest
+  type: ClusterIP

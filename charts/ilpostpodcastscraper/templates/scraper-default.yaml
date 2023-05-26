@@ -1,0 +1,15 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "ilpostpodcastscraper.fullname" . }}-scraper-default
+  labels:
+  {{- include "ilpostpodcastscraper.labels" . | nindent 4 }}
+spec:
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          group: ilpostscraper
+  podSelector:
+    matchLabels:
+      group: ilpostscraper

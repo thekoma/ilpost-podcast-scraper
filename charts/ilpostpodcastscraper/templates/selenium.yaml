@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "ilpostpodcastscraper.fullname" . }}-selenium
+  labels:
+    app: selenium
+    group: ilpostscraper
+  {{- include "ilpostpodcastscraper.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.selenium.type }}
+  selector:
+    app: selenium
+    group: ilpostscraper
+  {{- include "ilpostpodcastscraper.selectorLabels" . | nindent 4 }}
+  ports:
+	{{- .Values.selenium.ports | toYaml | nindent 2 -}}

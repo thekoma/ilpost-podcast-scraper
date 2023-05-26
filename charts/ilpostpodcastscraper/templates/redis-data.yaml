@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "ilpostpodcastscraper.fullname" . }}-redis-data
+  labels:
+    app: redis
+    group: ilpostscraper
+  {{- include "ilpostpodcastscraper.labels" . | nindent 4 }}
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.pvc.redisData.storageRequest | quote }}

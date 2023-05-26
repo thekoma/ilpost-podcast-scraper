@@ -20,4 +20,4 @@ COPY src/* .
 ENV PYTHONUNBUFFERED=TRUE
 ENV TZ='Europe/Rome'
 EXPOSE 5000
-CMD ["uvicorn", "ilpostscraper:app", "--proxy-headers", "--port", "5000", "--host", "0.0.0.0"]
+CMD ["uvicorn", "ilpostscraper:app", "--proxy-headers", "--port", "5000", "--host", "0.0.0.0", "--forwarded-allow-ips", "*"]

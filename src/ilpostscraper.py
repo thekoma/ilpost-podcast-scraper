@@ -71,8 +71,9 @@ REDIS_HOST = os.getenv("REDIS_HOST", "redis")
 REDIS_PORT = int(os.getenv("REDIS_PORT", "6379"))
 REDIS_DB = int(os.getenv("REDIS_DB", "0"))
 _1_sec = 1
-_12_hours = _1_sec * 60 * 60 * 12
-CACHE_TIME = int(os.getenv("CACHE_TIME", _12_hours))
+_1_hour = _1_sec * 60 * 60
+_12_hours = _1_hour * 12
+CACHE_TIME = int(os.getenv("CACHE_TIME", _1_hour))
 CACHE_TIME = int(os.getenv("CACHE_TIME", "43200"))  # 43200 is 12 hours
 CHECK_SITE = os.getenv("CHECK_SITE", "https://www.google.com")
 # Used Variables

@@ -17,9 +17,11 @@ from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.remote.remote_connection import LOGGER as SeleniumLogger
+from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from fastapi.security import OAuth2PasswordBearer
 
-
+# Setup Logging
 import logging
 
 LOGLEVEL = os.getenv("LOGLEVEL", "INFO")
@@ -52,14 +54,15 @@ def _quit(*vargs, **kwargs):
 logging.quit = _quit
 
 
+# Load Environment Variables from file
+
 load_dotenv()
 time.tzset()
-
 
 USERAGENT = os.getenv(
     "USERAGENT",
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36",
-)
+)  # Set the user agnet to something credible.
 # Values from envirionment
 USERNAME = os.getenv("LOGIN_USER")
 PASSWORD = os.getenv("LOGIN_PASSWORD")
@@ -67,6 +70,9 @@ SELENIUM_URL = os.getenv("SELENIUM_URL", "http://selenium:4444")
 REDIS_HOST = os.getenv("REDIS_HOST", "redis")
 REDIS_PORT = int(os.getenv("REDIS_PORT", "6379"))
 REDIS_DB = int(os.getenv("REDIS_DB", "0"))
+_1_sec = 1
+_12_hours = _1_sec * 60 * 60 * 12
+CACHE_TIME = int(os.getenv("CACHE_TIME", _12_hours))
 CACHE_TIME = int(os.getenv("CACHE_TIME", "43200"))  # 43200 is 12 hours
 CHECK_SITE = os.getenv("CHECK_SITE", "https://www.google.com")
 # Used Variables
@@ -81,10 +87,6 @@ SCRAPE_RETRIES = int(
     os.getenv("SCRAPE_RETRIES", "10")
 )  # how many time do I have to try and retrive the episode? This value should be 1 but the site sucks.
 EXPECTED_COOKIES = 3  # ilpost.it uses wordpress that produces a finite number of cookies in this case should be always be 3 or more.
-SECONDSBEFORECLOSINGDRIVER = int(
-    os.getenv("SECONDSBEFORECLOSINGDRIVER", "0")
-)  # This is useful to debug normally should be 0.
-
 
 #### Setup Option for the driver
 # Initialize the Chrome Browser Options.
@@ -94,13 +96,16 @@ opts.add_argument("user-agent=" + USERAGENT)
 # We prefer to use /tmp as SHM is a finite resource.
 opts.add_argument("disable-dev-shm-usage")
 
-# Init Objects
+# Init redis Connection
 redis_cache = redis.Redis(
     host=REDIS_HOST, port=REDIS_PORT, db=REDIS_DB, socket_timeout=1
 )
+
+# Initialize FastAPI
 app = FastAPI()
 
 
+# Get Cookies from Redis
 def get_cookies_redis():
     """Return false if redis has no cookies.
     Otherwise return cookies."""
@@ -135,6 +140,7 @@ def get_cookies_redis():
     return cookies
 
 
+# Create Cookies
 def create_cookies():
     """Create new cookies on wordpress!"""
     driver = webdriver.Remote(command_executor=SELENIUM_HUB, options=opts)
@@ -213,7 +219,7 @@ def is_redis_available():
 
 
 def get_cookies():
-    """Get cookies or try generatin new ones"""
+    """Get cookies or try generating new ones"""
     cookies = get_cookies_redis()
     if not cookies:
         logging.info("Validazione Cookie fallita, avvio la rigenerazione")
@@ -230,16 +236,17 @@ def send(driver, cmd, params={}):
     return response.get("value")
 
 
+# Load cookies into driver
 def load_cookies(driver):
     cookies = get_cookies()
     logging.debug("Deleting all cookies before adding new ones")
     driver.delete_all_cookies()
     send(driver, "Network.enable", params={})
     while len(driver.get_cookies()) < len(cookies):
-        logging.debug("looping loading all cookies")
+        logging.debug(f"looping loading all cookies")
         for cookie in cookies:
             if cookie.get("domain") == ".ilpost.it":
-                logging.debug("adding cookie {cookie}")
+                logging.debug(f"adding cookie {cookie}")
                 send(driver, "Network.setCookie", params=cookie)
         driver.get("https://www.ilpost.it")
         logging.debug(
@@ -250,6 +257,27 @@ def load_cookies(driver):
     send(driver, "Network.disable", params={})
 
 
+# Search a specific attribute in an object. If it's not present return False
+class element_has_atttribute(object):
+    """An expectation for checking that an element has a particular css class.
+
+    locator - used to find the element
+    returns the WebElement once it has the particular css class
+    """
+
+    def __init__(self, locator, attribute):
+        self.locator = locator
+        self.attribute = attribute
+
+    def __call__(self, driver):
+        element = driver.find_element(*self.locator)  # Finding the referenced element
+        for self.attr in element.get_property("attributes"):
+            if self.attr["name"] == self.attribute:
+                return True
+        return False
+
+
+# Scrape an episode
 def scrape_episode(podcast_data, refresh=True):
     short_name = podcast_data["short_name"]
     name = podcast_data["name"]
@@ -276,37 +304,31 @@ def scrape_episode(podcast_data, refresh=True):
     else:
         logging.warning(f"Need fresh data for {short_name} scraping")
         driver = webdriver.Remote(command_executor=SELENIUM_HUB, options=opts)
+        driver.implicitly_wait(10)
         with driver:
-            loop_scrape = 0
-            while True:
-                load_cookies(driver)
-                if driver.find_elements(By.CLASS_NAME, "user_icon user_not_logged"):
-                    logging.warning("Not logged in!")
+            load_cookies(driver)
+            driver.get(url)
+            logging.info(f"ℹ️ Scraping page: {url}")
+            logging.debug("Search " + PLAYER_XPATH)
+            player = driver.find_element(By.XPATH, PLAYER_XPATH)
+            logging.debug("Get URL using data-file or src")
+            logging.debug(
+                f"Searching for src or data-file attribute in {PLAYER_XPATH} on page {url}"
+            )
+            wait = WebDriverWait(driver, 10)
+            wait.until(element_has_atttribute((By.XPATH, PLAYER_XPATH), "src"))
+            player = driver.find_element(By.XPATH, PLAYER_XPATH)
+            attributes = ["src", "data-file"]
+            for attribute in attributes:
+                episode_url = player.get_attribute(attribute)
+                if "mp3" in episode_url:
+                    logging.info(
+                        f"Found streaming url {episode_url} looking in attribute {attribute}"
+                    )
+                    break
                 else:
-                    logging.info("ℹ️ Loading page")
-                    logging.debug(f"Getting {url}")
-                    driver.get("https://www.ilpost.it/podcasts/")
-                    driver.get(url)
-                    logging.debug("Search " + PLAYER_XPATH)
-                    elem = driver.find_element(By.XPATH, PLAYER_XPATH)
-                    logging.debug("Get URL using data-file")
-                    episode_url = elem.get_attribute("data-file")
-                    if not episode_url:
-                        logging.debug("Failed using data-file")
-                        logging.debug("Get URL using src")
-                        episode_url = elem.get_attribute("src")
-                    if episode_url:
-                        logging.debug("Success")
-                        break
-                    elif loop_scrape > SCRAPE_RETRIES:
-                        logging.debug(f"Failed {loop_scrape} times, giving up.")
-                        episode_url = "NotFound"
-                        break
-                    else:
-                        logging.debug("Failed using src")
-                        loop_scrape = loop_scrape + 1
-                        logging.debug(f"Looping again (Retry {loop_scrape}")
-            logging.debug(f"🎉 Found streaming url {episode_url}")
+                    logging.error(f"Notthing found in {attribute}: [{episode_url}]")
+
             last_scrape = time.time()
             old_episode_url = (
                 "Null"
@@ -406,13 +428,7 @@ def get_podcast_info(podcast_short_name):
     return response
 
 
-def scrape_all(podcasts):
-    response = []
-    for podcast in podcasts:
-        response.append(scrape_episode(podcast))
-    return response
-
-
+# Get all the podcasts
 def get_podcasts_list(fresh=False):
     logging.debug("Getting podcasts")
     if redis_cache.get("podcasts") and not fresh:
@@ -429,11 +445,6 @@ def get_podcasts_list(fresh=False):
             driver.get(find_url)
             cards = driver.find_elements(By.CLASS_NAME, "card")
             logging.debug(f"cycle thru {len(cards)} cards")
-            if SECONDSBEFORECLOSINGDRIVER > 0:
-                logging.debug(
-                    f"Sleeping  {SECONDSBEFORECLOSINGDRIVER} before continuing"
-                )
-            time.sleep(SECONDSBEFORECLOSINGDRIVER)
             podcasts = []
             for card in cards:
                 description = card.find_element(By.TAG_NAME, "p")
@@ -507,9 +518,7 @@ def podcasts(request: Request, response: Response, fresh: Union[str, None] = Non
 
 @app.api_route("/getall", response_class=ORJSONResponse, status_code=200)
 def getall():
-    podcasts = get_podcasts_list()
-    scrape_all(podcasts)
-    response = podcasts
+    response = [scrape_episode(podcast) for podcast in get_podcasts_list()]
     return response
 
 

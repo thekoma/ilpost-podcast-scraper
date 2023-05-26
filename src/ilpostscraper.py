@@ -283,6 +283,7 @@ def scrape_episode(podcast_data, refresh=True):
     name = podcast_data["name"]
     url = podcast_data["url"]
     description = podcast_data["description"]
+    logo = podcast_data["logo"]
     logging.debug("Requested scrape for " + short_name)
 
     # Don't want to hit the servers too much so I'll try cache the data for at least CACHE_TIME secons (defaults to 12 hours).
@@ -351,6 +352,7 @@ def scrape_episode(podcast_data, refresh=True):
                 "last_scrape": last_scrape,
                 "last_change": last_scrape,
                 "description": description,
+                "logo": logo,
             }
             redis_cache.set(short_name, pickle.dumps(response))
     return response
@@ -450,12 +452,14 @@ def get_podcasts_list(fresh=False):
                 description = card.find_element(By.TAG_NAME, "p")
                 header = card.find_element(By.TAG_NAME, "h3")
                 url = header.find_element(By.TAG_NAME, "a")
+                img = card.find_element(By.TAG_NAME, "img")
 
                 href = url.get_attribute("href")
                 name = url.text
                 description_txt = description.text
                 match = re.search(r"/episodes/podcasts/(.+)/", href)
                 short_name = match.group(1)
+                logo = img.get_attribute("src")
 
                 logging.debug(description_txt)
                 logging.debug(href)
@@ -467,6 +471,7 @@ def get_podcasts_list(fresh=False):
                         "name": name,
                         "url": href,
                         "description": description_txt,
+                        "logo": logo,
                     }
                 )
             print(podcasts)
@@ -503,8 +508,8 @@ def status_page(response: Response):
 
 # Scrape the list of the podcasts
 @app.api_route("/podcasts", response_class=ORJSONResponse, status_code=200)
-def podcasts(request: Request, response: Response, fresh: Union[str, None] = None):
-    podcasts = get_podcasts_list(fresh=fresh)
+def podcasts(request: Request, response: Response, refresh: Union[str, None] = None):
+    podcasts = get_podcasts_list(fresh=refresh)
     for podcast in podcasts:
         podcast["scrape_url"] = f"{request.base_url}podcast/{podcast['short_name']}"
         if redis_cache.get(podcast["short_name"]):
@@ -512,7 +517,6 @@ def podcasts(request: Request, response: Response, fresh: Union[str, None] = Non
             podcast["last_episode"] = scrape_data["episode"]
             podcast["last_scrape"] = scrape_data["last_scrape"]
             podcast["last_change"] = scrape_data["last_change"]
-
     return podcasts
 
 

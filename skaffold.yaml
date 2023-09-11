@@ -1,7 +1,14 @@
-apiVersion: skaffold/v4beta5
+apiVersion: skaffold/v4beta6
 kind: Config
 metadata:
   name: ilpost-scraper
+build:
+  artifacts:
+    - image: ilpostscraper
+      sync:
+        infer:
+          - src/*
+  local: {}
 manifests:
   rawYaml:
     - k8s/secret.yaml
@@ -13,18 +20,10 @@ manifests:
     - k8s/redis-service.yaml
     - k8s/selenium-deployment.yaml
     - k8s/selenium-service.yaml
-build:
-  artifacts:
-  - image: ilpostscraper
-    sync:
-      infer:
-      - 'src/*'
-
-  local: {}
 portForward:
-- resourceType: deployment
-  resourceName: ilpostscraper
-  port: 5000
-- resourceType: deployment
-  resourceName: selenium
-  port: 4444
+  - resourceType: deployment
+    resourceName: ilpostscraper
+    port: 5000
+  - resourceType: deployment
+    resourceName: selenium
+    port: 4444

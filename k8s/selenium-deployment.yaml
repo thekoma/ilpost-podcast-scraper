@@ -33,7 +33,7 @@ spec:
               value: '3'
             - name: SE_NODE_OVERRIDE_MAX_SESSIONS
               value: 'true'
-          image: selenium/standalone-chrome:latest
+          image: selenium/standalone-chrome:112.0
           livenessProbe:
             exec:
               command:

@@ -51,6 +51,6 @@ selenium:
       seNodeMaxSessions: "3"
       seNodeOverrideMaxSessions: "true"
     image:
-      repository: selenium/standalone-chrome
+      repository: selenium/standalone-chrome:112.0
       tag: latest
   type: ClusterIP

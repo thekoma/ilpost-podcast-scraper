@@ -1,0 +1,82 @@
+name: Pull request test
+on:
+  pull_request:
+    branches:
+      - main
+env:
+  TEST_IMAGE: "ghcr.io/${{ github.repository }}:${{ github.sha }}"
+jobs:
+  cancel-previous-runs:
+    name: Cancel previous runs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.12.0
+        with:
+          access_token: ${{ github.token }}
+
+  build:
+    name: Build the containers
+    runs-on: ubuntu-latest
+    steps:
+      - name: Do Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          config: .github/config/buildkitd.toml
+          install: true
+
+      - name: Setup docker-compose
+        uses: KengoTODA/actions-setup-docker-compose@main
+        with:
+          version: "1.29.2"
+
+      # - name: Login to GitHub Container Registry
+      #   uses: docker/login-action@v3
+      #   with:
+      #     registry: ghcr.io
+      #     username: ${{ github.actor }}
+      #     password: ${{ secrets.GITHUB_TOKEN }}
+
+      # - name: Add latest tag if main branch
+      #   uses: haya14busa/action-cond@v1
+      #   id: ismain
+      #   with:
+      #     cond: ${{ github.ref_name == 'main' }}
+      #     if_true: "ghcr.io/${{ github.repository }}:latest,"
+      #     if_false: ""
+
+      - name: Ignore cache if bumping
+        uses: haya14busa/action-cond@v1
+        id: bump
+        with:
+          cond: ${{ contains(github.event.head_commit.message, 'bump') }}
+          if_true: ""
+          if_false: "type=registry,ref=ghcr.io/${{ github.repository }}:buildcache"
+
+      - name: Build the image (but don't push it yet)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          tags: "${{ env.TEST_IMAGE }}"
+          load: true
+          cache-from: ${{ steps.bump.outputs.value }}
+
+      - name: Test the image
+        run: |
+          .github/bin/test.sh
+
+      # - name: Push the image!
+      #   uses: docker/build-push-action@v5
+      #   with:
+      #     context: .
+      #     push: true
+      #     tags: "${{ steps.ismain.outputs.value }}ghcr.io/${{ github.repository }}:${{ github.ref_name }}"
+      #     cache-from: ${{ steps.bump.outputs.value }}
+      #     cache-to: type=registry,ref=ghcr.io/${{ github.repository }}:buildcache,mode=max
+      #     platforms: linux/amd64,linux/arm64

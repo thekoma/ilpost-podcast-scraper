@@ -6,7 +6,7 @@ authors = ["Andrea Cervesato <andrea.cervesato@gmail.com>"]
 license = "MIT"
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = "^3.12"
 selenium = "^4.2.0"
 gunicorn = "^21.0.0"
 requests = "^2.31.0"
@@ -14,7 +14,7 @@ redis = "^5.0.0"
 python-dotenv = "^1.0.0"
 fastapi = "^0.109.0"
 uvicorn = "^0.26.0"
-orjson = "^3.7.2"
+orjson = "^3.9.12"
 logging = "^0.4.9.6"
 
 [tool.poetry.dev-dependencies]
